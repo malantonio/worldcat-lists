@@ -1,5 +1,4 @@
 <?php
-require dirname(__FILE__) . "/../vendor/autoload.php";
 use Sunra\PhpSimple\HtmlDomParser;
 
 // taken from: http://magp.ie/2011/01/06/remove-non-utf8-characters-from-string-with-php/
@@ -17,6 +16,11 @@ function clean_str($str) {
     return $str;
 }
 
+/**
+ *  pulls the list
+ *
+ */
+
 function extract_list_id($path) {
     $list_regex = "|/lists/(\d+)|";
 
@@ -28,22 +32,15 @@ function extract_list_id($path) {
 }
 
 function extract_oclc_number($url) {
-    $worldcat_regex = "|worldcat\.org|";
     $oclc_regex = "|/oclc/(\d+)|";
 
-    // if ( !preg_match($worldcat_regex, $url) ) {
-    //     echo 'no worldcat reg match';
-    //     return null;   
-    // } else {
-        preg_match($oclc_regex, $url, $m);
-        return isset($m[1]) ? $m[1] : null;
-    //}
+    preg_match($oclc_regex, $url, $m);
+    return isset($m[1]) ? $m[1] : null;
 }
 
-function get_lists($username) {
+function get_lists($username, $show_items = false) {
     $out = array();
     $body = HtmlDomParser::file_get_html(get_url($username));
-    //$lists = $body->find('a[id^="userlist"]');
     $lists = $body->find('.table-results-lists tbody tr');
     foreach($lists as $list) {
         $name_raw = $list->find('.list a');
@@ -56,9 +53,12 @@ function get_lists($username) {
         $out[] = array(
             "name" => $name,
             "id" => $id,
-            "description" => $desc,
-            "items" => (!empty($id) ? get_list_items($username, $id) : array())
+            "description" => $desc
         );
+        
+        if ( $show_items ) {
+            $out['items'] = !empty($id) ? get_list_items($username, $id) : array();
+        }
     }
 
     return $out;
@@ -81,7 +81,7 @@ function get_list_items($username, $listID) {
                 : "";
         
         // I'm having a heck of a time removing the trailing space,
-        // which I think is an encoding issue?
+        // I think it's an encoding issue?
         $type_raw = $item->find('.type');
         $format = !empty($type_raw) 
                 ? trim(clean_str(html_entity_decode($type_raw[0]->plaintext)))

@@ -1,7 +1,11 @@
 {
-    "name": "oclc-lists",
+    "name": "wc-lists",
     
     "require": {
         "sunra/php-simple-html-dom-parser": "1.5"
+    },
+
+    "autoload": {
+        "files": [ "lib/wc-lists.php" ]
     }
 }
