@@ -1,0 +1,143 @@
+#! /usr/bin/env php
+<?php
+require dirname(__FILE__) . "/../vendor/autoload.php";
+
+$name = array_shift($argv);
+
+$usage = function($exit_code = 0) use ($name) {
+    line("usage: {$name} [options] [<worldcat username>] [<list id>]");
+    line("options:");
+    line("      -h, --help        display help");
+    line("      -H, --use-header  display header on printout (plaintext only)");
+    line("      -i, --show-items  show all items in list");
+    line("      -j, --json        output as json");
+    line("      -l, --list        list ID to retrieve");
+    line("      -s, --save        path to save file");
+    line("      -u, --user        WorldCat username to search");
+    exit($exit_code);
+};
+
+function line($text) { print $text . PHP_EOL; }
+
+function format_output($results, $prefix = "") {
+    $out = "";
+    foreach($results as $result) {
+        foreach( $result as $key => $val ) {
+            if ( is_array($val) && !empty($val)) {
+                $out .= "{$key}:\n";
+                $out .= format_output($val, "\t");
+            } elseif ( is_array($val) && empty($val) ) {
+                $out .= "{$prefix}{$key}:\n";
+            } else {
+                $out .= "{$prefix}{$key}: {$val}\n";
+            }
+        }
+
+        $out .= "\n";
+    }
+    return $out;
+}
+
+$shortopts  = "";
+$shortopts .= "h";
+$shortopts .= "H";
+$shortopts .= "i";
+$shortopts .= "j";
+$shortopts .= "l:";
+$shortopts .= "s:";
+$shortopts .= "u:";
+
+$longopts = array(
+    "save:", "list:", "user:", "help", "json", "show-items", "use-header"
+);
+
+$options = array(
+    "save" => null,
+    "user" => null,
+    "id" => null,
+    "json" => false,
+    "show-items" => false,
+    "header" => false
+);
+
+if ( empty($argv) ) { $usage(); }
+
+$opts = getopt($shortopts, $longopts);
+
+while ( isset($argv[0]) && preg_match("/^--?/", $argv[0]) ) {
+    array_shift($argv);
+}
+
+// -h, --help
+if ( isset($opts['h']) || isset($opts['help']) ) {
+    $usage();
+}
+
+// -H, --use-header
+if ( isset($opts['H']) || isset($opts['use-header']) ) {
+    $options['header'] = true;
+}
+
+// -i, --show-items
+if ( isset($opts['i']) || isset($opts['show-items']) ) {
+    $options['show-items'] = true;
+}
+
+// -j, --json
+if ( isset($opts['j']) || isset($opts['json']) ) {
+    $options['json'] = true;
+}
+
+// -l, --list
+if ( isset($opts['l']) || isset($opts['list']) ) {
+    $options['id'] = isset($opts['l']) ? $opts['l'] : $opts['list'];
+}
+
+// -s, --save
+if ( isset($opts['s']) || isset($opts['save']) ) {
+    $options['save'] = isset($opts['s']) ? $opts['s'] : $opts['save'];
+}
+
+// -u, --user
+if ( isset($opts['u']) || isset($opts['user']) ) {
+    $options['user'] = isset($opts['u']) ? $opts['u'] : $opts['user'];
+}
+
+if ( isset($argv[0]) ) {
+    $options['user'] = array_shift($argv);
+} elseif ( is_null($options['user']) ) {
+    line("ERROR: need to provide a WorldCat username");
+    $usage(1);
+}
+
+if ( isset($argv[0]) ) {
+    $options['id'] = array_shift($argv);
+    $specific_list = true;
+}
+
+try {
+    if ( !is_null($options['id']) ) {
+        $items = get_list_items($options['user'], $options['id']);
+    } else {
+        $items = get_lists($options['user'], $options['show-items']);
+    }
+} catch ( Exception $e ) {
+    line("ERROR: " . $e->getMessage());
+    exit(1);
+}
+
+$output = "";
+
+if ( $options['header'] === true ) {
+    $output .= is_null($options['id'])
+            ? "{$options['user']}'s lists\n"
+            : "List ID {$options['id']} by {$options['user']}\n"
+            ;
+
+    $output .= str_repeat("-", strlen($output)) . "\n";
+}
+
+$output .= $options['json'] === true ? json_encode($items) : format_output($items);
+
+echo $output;
+exit();
