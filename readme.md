@@ -19,13 +19,14 @@ Returns an array of associative arrays for each item in the specified list. Each
 `date_added`  | Date item was added to the list
 
 #### array get_lists(string $username[, bool $show_items = false]) ####
-Returns an array of associative arrays for each list. The optional `$show_items` parameter will use `get_list_items()` to retrieve items from each list. These keys are used:
+Returns an array of associative arrays for each list. The optional `$show_items` parameter will use `get_list_items` to retrieve items from each list. These keys are used:
 
      key      |     value
 --------------|-----------------
 `name`        | User-provided name for the list
 `id`          | The list's ID
 `description` | User-provided description for list
+`items`       | If `$show_items` is `true`, will contain an array of items (returned from `get_list_items`), otherwise will be `null`
 
 
 ### command line ###

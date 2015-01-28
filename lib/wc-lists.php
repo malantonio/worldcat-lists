@@ -21,7 +21,7 @@ function get_lists($username, $show_items = false) {
         );
         
         if ( $show_items ) {
-            $out[$i]['items'] = !empty($id) ? get_list_items($username, $id) : array();
+            $out[$i]['items'] = !empty($id) ? get_list_items($username, $id) : null;
         }
         $i++;
     }
