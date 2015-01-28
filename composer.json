@@ -1,0 +1,7 @@
+{
+    "name": "oclc-lists",
+    
+    "require": {
+        "sunra/php-simple-html-dom-parser": "1.5"
+    }
+}
